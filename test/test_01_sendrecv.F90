@@ -1,4 +1,4 @@
-program array_1d_comm
+program sendrecv_comm
     use mpi
     implicit none
 
