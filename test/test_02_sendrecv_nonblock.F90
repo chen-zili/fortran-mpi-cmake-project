@@ -28,30 +28,30 @@ program sendrecv_nonblock_comm
     send_buff = rank
 
     if (rank_left /= -1) then
-        call MPI_ISend(send_buff(1), 1, MPI_INTEGER, rank_left, 1, MPI_COMM_WORLD, reqs_left(1), ierr)
-        call MPI_IRecv(recv_buff(1), 1, MPI_INTEGER, rank_left, 1, MPI_COMM_WORLD, reqs_left(2), ierr)
+        call MPI_ISEND(send_buff(1), 1, MPI_INTEGER, rank_left, 1, MPI_COMM_WORLD, reqs_left(1), ierr)
+        call MPI_IRECV(recv_buff(1), 1, MPI_INTEGER, rank_left, 1, MPI_COMM_WORLD, reqs_left(2), ierr)
     end if
 
     if (rank_right /= -1) then
-        call MPI_ISend(send_buff(2), 1, MPI_INTEGER, rank_right, 1, MPI_COMM_WORLD, reqs_right(1), ierr)
-        call MPI_IRecv(recv_buff(2), 1, MPI_INTEGER, rank_right, 1, MPI_COMM_WORLD, reqs_right(2), ierr)
+        call MPI_ISEND(send_buff(2), 1, MPI_INTEGER, rank_right, 1, MPI_COMM_WORLD, reqs_right(1), ierr)
+        call MPI_IRECV(recv_buff(2), 1, MPI_INTEGER, rank_right, 1, MPI_COMM_WORLD, reqs_right(2), ierr)
     end if
 
     if (rank_left /= -1) then
         call MPI_WAITALL(2, reqs_left, status_left, ierr)
-        call MPI_Get_count(status_left(:, 2), MPI_INTEGER, recv_count, ierr)
+        call MPI_GET_COUNT(status_left(:, 2), MPI_INTEGER, recv_count, ierr)
         write(*, *) "Recv count: ", recv_count
         write(*, *) "Recv ", recv_buff(1), " in ", rank
     end if
 
     if (rank_right /= -1) then
         call MPI_WAITALL(2, reqs_right, status_right, ierr)
-        call MPI_Get_count(status_right(:, 2), MPI_INTEGER, recv_count, ierr)
+        call MPI_GET_COUNT(status_right(:, 2), MPI_INTEGER, recv_count, ierr)
         write(*, *) "Recv count: ", recv_count
         write(*, *) "Recv ", recv_buff(2), " in ", rank
     end if
 
-    call MPI_Barrier(MPI_COMM_WORLD, ierr)
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
     call MPI_FINALIZE(ierr)
 end

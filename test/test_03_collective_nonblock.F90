@@ -54,7 +54,7 @@ program collective_nonblock_comm
 
     write(*, '(*(i4, 1x))') rank, array_1d
 
-    call MPI_Barrier(MPI_COMM_WORLD, ierr)
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
     call MPI_FINALIZE(ierr)
 end

@@ -13,20 +13,20 @@ program sendrecv_comm
 
     if (0 == rank) then
         send_buff = 0
-        call MPI_Send(send_buff, 1, MPI_INTEGER, 1, 1, MPI_COMM_WORLD, ierr)
+        call MPI_SEND(send_buff, 1, MPI_INTEGER, 1, 1, MPI_COMM_WORLD, ierr)
         write(*, *) "Send ", send_buff, " in ", rank
 
     else if (1 == rank) then
-        call MPI_probe(0, 1, MPI_COMM_WORLD, status, ierr)
-        call MPI_Get_count(status, MPI_INTEGER, recv_count, ierr)
+        call MPI_PROBE(0, 1, MPI_COMM_WORLD, status, ierr)
+        call MPI_GET_COUNT(status, MPI_INTEGER, recv_count, ierr)
         write(*, *) "Recv count: ", recv_count
 
-        call MPI_Recv(recv_buff, recv_count, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, status, ierr)
+        call MPI_RECV(recv_buff, recv_count, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, status, ierr)
 
         write(*, *) "Recv ", recv_buff, " in ", rank
     end if
 
-    call MPI_Barrier(MPI_COMM_WORLD, ierr)
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
     call MPI_FINALIZE(ierr)
 end
