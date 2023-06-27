@@ -31,6 +31,11 @@ make install -j8
 make install -j8
 ```
 
+添加到路径：
+```shell
+export PATH=/home/chenzili/tau/x86_64/bin:$PATH
+```
+
 详细过程见 PDT 和 TAU 目录中的 Readme 和 INSTALL
 
 ### TAU使用
