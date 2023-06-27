@@ -1,4 +1,4 @@
-program sendrecv_nonblock_comm
+program one_side_comm
     use mpi
     implicit none
 
