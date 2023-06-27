@@ -44,7 +44,7 @@ pprof
 
 ## 参考链接
 
-- [Message Passing Interface (MPI)] (https://hpc-tutorials.llnl.gov/mpi/)
+- [Message Passing Interface (MPI)](https://hpc-tutorials.llnl.gov/mpi/)
 - [TAU: Tuning and Analysis Utilities](https://hpc.llnl.gov/software/development-environment-software/tau-tuning-and-analysis-utilities)
 - [TAU Installation](https://lsi2.ugr.es/jmantas/ppr/ayuda/datos/instalaciones/Install_TAU_en.pdf)
 - [INTERMEDIATE MPI](https://enccs.github.io/intermediate-mpi/#)
