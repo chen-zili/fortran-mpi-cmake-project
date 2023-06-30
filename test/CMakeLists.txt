@@ -32,9 +32,16 @@ target_link_libraries(${test_04} PUBLIC MPI::MPI_Fortran)
 
 add_test(NAME ${test_04} COMMAND "mpirun" "-np" "4" "./${test_04}")
 
-# test 05 测试场通信
+# test 05 测试场通信 非阻塞
 set(test_05 "test_05")
 add_executable(${test_05} field_nonblock.F90)
 target_link_libraries(${test_05} PUBLIC MPI::MPI_Fortran)
 
 add_test(NAME ${test_05} COMMAND "mpirun" "-np" "9" "./${test_05}")
+
+# test 06 测试场通信 one-side
+set(test_06 "test_06")
+add_executable(${test_06} field_one_side.F90)
+target_link_libraries(${test_06} PUBLIC MPI::MPI_Fortran)
+
+add_test(NAME ${test_06} COMMAND "mpirun" "-np" "9" "./${test_06}")
