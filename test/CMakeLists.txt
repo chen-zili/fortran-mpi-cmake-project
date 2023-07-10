@@ -45,3 +45,10 @@ add_executable(${test_06} field_one_side.F90)
 target_link_libraries(${test_06} PUBLIC MPI::MPI_Fortran)
 
 add_test(NAME ${test_06} COMMAND "mpirun" "-np" "9" "./${test_06}")
+
+# test 07 测试粒子通信 非阻塞
+set(test_07 "test_07")
+add_executable(${test_07} particle_nonblock.F90)
+target_link_libraries(${test_07} PUBLIC MPI::MPI_Fortran)
+
+add_test(NAME ${test_07} COMMAND "mpirun" "-np" "9" "./${test_07}")

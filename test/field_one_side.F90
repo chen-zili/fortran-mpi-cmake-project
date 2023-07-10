@@ -1,4 +1,4 @@
-program field_nonblock__comm
+program field_one_side_comm
     use mpi
     implicit none
 

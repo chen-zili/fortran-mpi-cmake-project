@@ -128,6 +128,8 @@ program field_nonblock__comm
     recv_buff_edge_bottom = 0
     recv_buff_corner = 0
 
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+
     ! send and recv edge
     if (negb_type(8) == negb_type_domain) then  ! left
         call MPI_ISEND(send_buff_edge_left, Ly, MPI_INTEGER, negb_rank(8), 1, MPI_COMM_WORLD, reqs_left(1), ierr)
