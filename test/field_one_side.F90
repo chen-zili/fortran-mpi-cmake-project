@@ -136,36 +136,36 @@ program field_one_side_comm
     ! send and recv edge
     if (negb_type(8) == negb_type_domain) then  ! left
         disp_aint = 0
-        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_type(8), 0, win_left, ierr)
-        call MPI_GET(recv_buff_edge_left, Ly, MPI_INTEGER, negb_type(8), disp_aint, Ly, MPI_INTEGER, win_left, ierr)
-        call MPI_WIN_UNLOCK(negb_type(8), win_left, ierr)
+        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_rank(8), 0, win_left, ierr)
+        call MPI_GET(recv_buff_edge_left, Ly, MPI_INTEGER, negb_rank(8), disp_aint, Ly, MPI_INTEGER, win_left, ierr)
+        call MPI_WIN_UNLOCK(negb_rank(8), win_left, ierr)
 
         field(1, 1:Ly) = field(1, 1:Ly) + recv_buff_edge_left
     end if
 
     if (negb_type(4) == negb_type_domain) then  ! right
         disp_aint = 0
-        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_type(4), 0, win_right, ierr)
-        call MPI_GET(recv_buff_edge_right, Ly, MPI_INTEGER, negb_type(4), disp_aint, Ly, MPI_INTEGER, win_right, ierr)
-        call MPI_WIN_UNLOCK(negb_type(4), win_right, ierr)
+        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_rank(4), 0, win_right, ierr)
+        call MPI_GET(recv_buff_edge_right, Ly, MPI_INTEGER, negb_rank(4), disp_aint, Ly, MPI_INTEGER, win_right, ierr)
+        call MPI_WIN_UNLOCK(negb_rank(4), win_right, ierr)
 
         field(Lx, 1:Ly) = field(Lx, 1:Ly) + recv_buff_edge_right
     end if
 
     if (negb_type(2) == negb_type_domain) then  ! top
         disp_aint = 0
-        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_type(2), 0, win_top, ierr)
-        call MPI_GET(recv_buff_edge_top, Lx, MPI_INTEGER, negb_type(2), disp_aint, Lx, MPI_INTEGER, win_top, ierr)
-        call MPI_WIN_UNLOCK(negb_type(2), win_top, ierr)
+        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_rank(2), 0, win_top, ierr)
+        call MPI_GET(recv_buff_edge_top, Lx, MPI_INTEGER, negb_rank(2), disp_aint, Lx, MPI_INTEGER, win_top, ierr)
+        call MPI_WIN_UNLOCK(negb_rank(2), win_top, ierr)
 
         field(1:Lx, 1) = field(1:Lx, 1) + recv_buff_edge_top
     end if
 
     if (negb_type(6) == negb_type_domain) then  ! bottom
         disp_aint = 0
-        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_type(6), 0, win_bottom, ierr)
-        call MPI_GET(recv_buff_edge_bottom, Lx, MPI_INTEGER, negb_type(6), disp_aint, Lx, MPI_INTEGER, win_bottom, ierr)
-        call MPI_WIN_UNLOCK(negb_type(6), win_bottom, ierr)
+        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_rank(6), 0, win_bottom, ierr)
+        call MPI_GET(recv_buff_edge_bottom, Lx, MPI_INTEGER, negb_rank(6), disp_aint, Lx, MPI_INTEGER, win_bottom, ierr)
+        call MPI_WIN_UNLOCK(negb_rank(6), win_bottom, ierr)
 
         field(1:Lx, Ly) = field(1:Lx, Ly) + recv_buff_edge_bottom
     end if
@@ -173,36 +173,36 @@ program field_one_side_comm
     ! send and recv corner
     if (negb_type(1) == negb_type_domain) then ! corner left top
         disp_aint = Lx-1
-        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_type(1), 0, win_bottom, ierr)
-        call MPI_GET(recv_buff_corner(1), 1, MPI_INTEGER, negb_type(1), disp_aint, 1, MPI_INTEGER, win_bottom, ierr)
-        call MPI_WIN_UNLOCK(negb_type(1), win_bottom, ierr)
+        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_rank(1), 0, win_bottom, ierr)
+        call MPI_GET(recv_buff_corner(1), 1, MPI_INTEGER, negb_rank(1), disp_aint, 1, MPI_INTEGER, win_bottom, ierr)
+        call MPI_WIN_UNLOCK(negb_rank(1), win_bottom, ierr)
 
         field(1, 1) = field(1, 1) + recv_buff_corner(1)
     end if
 
     if (negb_type(3) == negb_type_domain) then ! corner right top
         disp_aint = 0
-        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_type(3), 0, win_bottom, ierr)
-        call MPI_GET(recv_buff_corner(2), 1, MPI_INTEGER, negb_type(3), disp_aint, 1, MPI_INTEGER, win_bottom, ierr)
-        call MPI_WIN_UNLOCK(negb_type(3), win_bottom, ierr)
+        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_rank(3), 0, win_bottom, ierr)
+        call MPI_GET(recv_buff_corner(2), 1, MPI_INTEGER, negb_rank(3), disp_aint, 1, MPI_INTEGER, win_bottom, ierr)
+        call MPI_WIN_UNLOCK(negb_rank(3), win_bottom, ierr)
 
         field(Lx, 1) = field(Lx, 1) + recv_buff_corner(2)
     end if
 
     if (negb_type(5) == negb_type_domain) then ! corner right bottom
         disp_aint = 0
-        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_type(5), 0, win_top, ierr)
-        call MPI_GET(recv_buff_corner(3), 1, MPI_INTEGER, negb_type(5), disp_aint, 1, MPI_INTEGER, win_top, ierr)
-        call MPI_WIN_UNLOCK(negb_type(5), win_top, ierr)
+        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_rank(5), 0, win_top, ierr)
+        call MPI_GET(recv_buff_corner(3), 1, MPI_INTEGER, negb_rank(5), disp_aint, 1, MPI_INTEGER, win_top, ierr)
+        call MPI_WIN_UNLOCK(negb_rank(5), win_top, ierr)
 
         field(Lx, Ly) = field(Lx, Ly) + recv_buff_corner(3)
     end if
 
     if (negb_type(7) == negb_type_domain) then ! corner left bottom
         disp_aint = Lx-1
-        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_type(7), 0, win_top, ierr)
-        call MPI_GET(recv_buff_corner(4), 1, MPI_INTEGER, negb_type(7), disp_aint, 1, MPI_INTEGER, win_top, ierr)
-        call MPI_WIN_UNLOCK(negb_type(7), win_top, ierr)
+        call MPI_WIN_LOCK(MPI_LOCK_SHARED, negb_rank(7), 0, win_top, ierr)
+        call MPI_GET(recv_buff_corner(4), 1, MPI_INTEGER, negb_rank(7), disp_aint, 1, MPI_INTEGER, win_top, ierr)
+        call MPI_WIN_UNLOCK(negb_rank(7), win_top, ierr)
 
         field(1, Ly) = field(1, Ly) + recv_buff_corner(4)
     end if
