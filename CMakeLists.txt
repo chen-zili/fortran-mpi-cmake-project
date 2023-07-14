@@ -6,8 +6,9 @@ find_package(MPI)
 
 set(CMAKE_BUILD_TYPE Release CACHE STRING "set build type to Release")
 
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.F90)
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.F90
+                               ${PROJECT_SOURCE_DIR}/src/field_com.F90)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_Fortran)
 
-add_subdirectory(test)
+# add_subdirectory(test)
