@@ -15,7 +15,7 @@ program fortran_mpi
     call MPI_COMM_SIZE(MPI_COMM_WORLD, size, ierr)
     call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
 
-    call mycom%init(lx, ly, px, py, com_type_nonblock)
+    call mycom%init(lx, ly, px, py, com_type_onesided)
 
     allocate(array(lx, ly))
     allocate(array_out(lx*px, ly*py))

@@ -177,6 +177,21 @@ module ModuleFieldCommunication
 
                 this%is_init = .True.
 
+                ! 创建远程访问窗口
+                if (com_type_onesided == this%com_type) then
+                    this%win_size = 8 * this%ly
+                    call MPI_WIN_CREATE(this%send_buff_edge_left, this%win_size, 8, MPI_INFO_NULL, MPI_COMM_WORLD, this%win_left, ierr)
+
+                    this%win_size = 8 * this%ly
+                    call MPI_WIN_CREATE(this%send_buff_edge_right, this%win_size, 8, MPI_INFO_NULL, MPI_COMM_WORLD, this%win_right, ierr)
+
+                    this%win_size = 8 * this%lx
+                    call MPI_WIN_CREATE(this%send_buff_edge_bottom, this%win_size, 8, MPI_INFO_NULL, MPI_COMM_WORLD, this%win_bottom, ierr)
+
+                    this%win_size = 8 * this%lx
+                    call MPI_WIN_CREATE(this%send_buff_edge_top, this%win_size, 8, MPI_INFO_NULL, MPI_COMM_WORLD, this%win_top, ierr)
+                end if
+
             else
                 if (0 == this%rank) then
                     write(*, *) "The input parameters of the FieldCom2D are invalid."
@@ -189,6 +204,7 @@ module ModuleFieldCommunication
 
         subroutine destroyFieldCom2D(this)
             class(FieldCom2D), intent(inout) :: this
+            integer(4) :: ierr
 
             if (allocated(this%send_buff_edge_left))    deallocate(this%send_buff_edge_left)
             if (allocated(this%send_buff_edge_right))   deallocate(this%send_buff_edge_right)
@@ -199,6 +215,13 @@ module ModuleFieldCommunication
             if (allocated(this%recv_buff_edge_right))   deallocate(this%recv_buff_edge_right)
             if (allocated(this%recv_buff_edge_bottom))  deallocate(this%recv_buff_edge_bottom)
             if (allocated(this%recv_buff_edge_top))     deallocate(this%recv_buff_edge_top)
+
+            if (com_type_onesided == this%com_type .and. this%is_init) then
+                call MPI_WIN_FREE(this%win_left, ierr)
+                call MPI_WIN_FREE(this%win_right, ierr)
+                call MPI_WIN_FREE(this%win_top, ierr)
+                call MPI_WIN_FREE(this%win_bottom, ierr)
+            end if
 
             this%is_init = .False.
 
@@ -232,11 +255,11 @@ module ModuleFieldCommunication
                         this%send_buff_corner(3)    = array2d(xend, yend)
                         this%send_buff_corner(4)    = array2d(xstart, yend)
 
-                        this%recv_buff_edge_left   = 0
-                        this%recv_buff_edge_right  = 0
-                        this%recv_buff_edge_bottom = 0
-                        this%recv_buff_edge_top    = 0
-                        this%recv_buff_corner      = 0
+                        this%recv_buff_edge_left    = 0
+                        this%recv_buff_edge_right   = 0
+                        this%recv_buff_edge_bottom  = 0
+                        this%recv_buff_edge_top     = 0
+                        this%recv_buff_corner       = 0
 
                         call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 
@@ -337,7 +360,93 @@ module ModuleFieldCommunication
                         end if
 
                     else if (com_type_onesided == this%com_type) then
+                        this%send_buff_edge_left    = array2d(xstart, ystart:yend)
+                        this%send_buff_edge_right   = array2d(xstart, ystart:yend)
+                        this%send_buff_edge_bottom  = array2d(xstart:xend, ystart)
+                        this%send_buff_edge_top     = array2d(xstart:xend, yend)
 
+                        this%recv_buff_edge_left    = 0
+                        this%recv_buff_edge_right   = 0
+                        this%recv_buff_edge_bottom  = 0
+                        this%recv_buff_edge_top     = 0
+                        this%recv_buff_corner       = 0
+
+                        call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+
+                        ! send and recv edge
+                        if (this%negb_type(negb_left) == negb_type_domain) then  ! left
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_left), 0, this%win_left, ierr)
+                            call MPI_GET(this%recv_buff_edge_left, this%ly, MPI_DOUBLE, this%negb_rank(negb_left), this%disp_aint, this%ly, MPI_DOUBLE, this%win_left, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_left), this%win_left, ierr)
+
+                            array2d(xstart, ystart:yend) = array2d(xstart, ystart:yend) + this%recv_buff_edge_left
+                        end if
+
+                        if (this%negb_type(negb_right) == negb_type_domain) then  ! right
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_right), 0, this%win_right, ierr)
+                            call MPI_GET(this%recv_buff_edge_right, this%ly, MPI_DOUBLE, this%negb_rank(negb_right), this%disp_aint, this%ly, MPI_DOUBLE, this%win_right, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_right), this%win_right, ierr)
+
+                            array2d(xend, ystart:yend) = array2d(xend, ystart:yend) + this%recv_buff_edge_right
+                        end if
+
+                        if (this%negb_type(negb_bottom) == negb_type_domain) then  ! bottom
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_bottom), 0, this%win_bottom, ierr)
+                            call MPI_GET(this%recv_buff_edge_bottom, this%lx, MPI_DOUBLE, this%negb_rank(negb_bottom), this%disp_aint, this%lx, MPI_DOUBLE, this%win_bottom, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_bottom), this%win_bottom, ierr)
+
+                            array2d(xstart:xend, ystart) = array2d(xstart:xend, ystart) + this%recv_buff_edge_bottom
+                        end if
+
+                        if (this%negb_type(negb_top) == negb_type_domain) then  ! top
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_top), 0, this%win_top, ierr)
+                            call MPI_GET(this%recv_buff_edge_top, this%lx, MPI_DOUBLE, this%negb_rank(negb_top), this%disp_aint, this%lx, MPI_DOUBLE, this%win_top, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_top), this%win_top, ierr)
+
+                            array2d(xstart:xend, yend) = array2d(xstart:xend, yend) + this%recv_buff_edge_top
+                        end if
+
+                        ! send and recv corner
+                        if (this%negb_type(negb_left_bottom) == negb_type_domain) then ! corner left bottom
+                            this%disp_aint = this%lx-1
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_left_bottom), 0, this%win_top, ierr)
+                            call MPI_GET(this%recv_buff_corner(1), 1, MPI_DOUBLE, this%negb_rank(negb_left_bottom), this%disp_aint, 1, MPI_DOUBLE, this%win_top, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_left_bottom), this%win_top, ierr)
+
+                            array2d(xstart, ystart) = array2d(xstart, ystart) + this%recv_buff_corner(1)
+                        end if
+
+                        if (this%negb_type(negb_right_bottom) == negb_type_domain) then ! corner right bottom
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_right_bottom), 0, this%win_top, ierr)
+                            call MPI_GET(this%recv_buff_corner(2), 1, MPI_DOUBLE, this%negb_rank(negb_right_bottom), this%disp_aint, 1, MPI_DOUBLE, this%win_top, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_right_bottom), this%win_top, ierr)
+
+                            array2d(xend, ystart) = array2d(xend, ystart) + this%recv_buff_corner(2)
+                        end if
+
+                        if (this%negb_type(negb_right_top) == negb_type_domain) then ! corner right top
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_right_top), 0, this%win_bottom, ierr)
+                            call MPI_GET(this%recv_buff_corner(3), 1, MPI_DOUBLE, this%negb_rank(negb_right_top), this%disp_aint, 1, MPI_DOUBLE, this%win_bottom, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_right_top), this%win_bottom, ierr)
+
+                            array2d(xend, yend) = array2d(xend, yend) + this%recv_buff_corner(3)
+                        end if
+
+                        if (this%negb_type(negb_left_top) == negb_type_domain) then ! corner left top
+                            this%disp_aint = this%lx-1
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_left_top), 0, this%win_bottom, ierr)
+                            call MPI_GET(this%recv_buff_corner(4), 1, MPI_DOUBLE, this%negb_rank(negb_left_top), this%disp_aint, 1, MPI_DOUBLE, this%win_bottom, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_left_top), this%win_bottom, ierr)
+
+                            array2d(xstart, yend) = array2d(xstart, yend) + this%recv_buff_corner(4)
+                        end if
+                        
                     end if
 
                 else if (com_opt_ext == opt_type) then
