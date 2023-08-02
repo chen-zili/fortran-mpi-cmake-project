@@ -571,6 +571,113 @@ module ModuleFieldCommunication
                         end if
 
                     else if (field_com_type_onesided == this%com_type) then
+                        this%send_buff_edge_left    = array2d(xstart+1, ystart:yend)
+                        this%send_buff_edge_right   = array2d(xend-1, ystart:yend)
+                        this%send_buff_edge_bottom  = array2d(xstart:xend, ystart+1)
+                        this%send_buff_edge_top     = array2d(xstart:xend, yend-1)
+
+                        this%recv_buff_edge_left    = 0
+                        this%recv_buff_edge_right   = 0
+                        this%recv_buff_edge_bottom  = 0
+                        this%recv_buff_edge_top     = 0
+
+                        call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+
+                        ! send and recv edge
+                        if (this%negb_type(negb_left) == negb_type_domain) then         ! left
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_left), 0, this%win_right, ierr)
+                            call MPI_GET(this%recv_buff_edge_left, this%ly, MPI_DOUBLE, this%negb_rank(negb_left), this%disp_aint, this%ly, MPI_DOUBLE, this%win_right, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_left), this%win_right, ierr)
+
+                            array2d(xstart-1, ystart:yend) = this%recv_buff_edge_left
+                            array2d(xstart-1, ystart-1)    = 2.d0 * array2d(xstart-1, ystart) - array2d(xstart-1, ystart+1)
+                            array2d(xstart-1, yend+1)      = 2.d0 * array2d(xstart-1, yend) - array2d(xstart-1, yend-1)
+
+                        else if (this%negb_type(negb_left) == negb_type_boundary) then
+                            if (this%left_ext_type == negb_ext_type_intep) then
+                                array2d(xstart-1, ystart:yend) = 2.d0 * array2d(xstart, ystart:yend) - array2d(xstart+1, ystart:yend)
+                                array2d(xstart-1, ystart-1)    = 2.d0 * array2d(xstart-1, ystart) - array2d(xstart-1, ystart+1)
+                                array2d(xstart-1, yend+1)      = 2.d0 * array2d(xstart-1, yend) - array2d(xstart-1, yend-1)
+                            
+                            else if (this%left_ext_type == negb_ext_type_symmetry) then
+                                array2d(xstart-1, ystart:yend) = array2d(xstart+1, ystart:yend)
+                                array2d(xstart-1, ystart-1)    = 2.d0 * array2d(xstart-1, ystart) - array2d(xstart-1, ystart+1)
+                                array2d(xstart-1, yend+1)      = 2.d0 * array2d(xstart-1, yend) - array2d(xstart-1, yend-1)
+
+                            end if
+                        end if
+
+                        if (this%negb_type(negb_right) == negb_type_domain) then        ! right
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_right), 0, this%win_left, ierr)
+                            call MPI_GET(this%recv_buff_edge_right, this%ly, MPI_DOUBLE, this%negb_rank(negb_right), this%disp_aint, this%ly, MPI_DOUBLE, this%win_left, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_right), this%win_left, ierr)
+
+                            array2d(xend+1, ystart:yend)   = this%recv_buff_edge_right
+                            array2d(xend+1, ystart-1)      = 2.d0 * array2d(xend+1, ystart) - array2d(xend+1, ystart+1)
+                            array2d(xend+1, yend+1)        = 2.d0 * array2d(xend+1, yend) - array2d(xend+1, yend-1)
+
+                        else if (this%negb_type(negb_right) == negb_type_boundary) then
+                            if (this%right_ext_type == negb_ext_type_intep) then
+                                array2d(xend+1, ystart:yend)   = 2.d0 * array2d(xend, ystart:yend) - array2d(xend-1, ystart:yend)
+                                array2d(xend+1, ystart-1)      = 2.d0 * array2d(xend+1, ystart) - array2d(xend+1, ystart+1)
+                                array2d(xend+1, yend+1)        = 2.d0 * array2d(xend+1, yend) - array2d(xend+1, yend-1)
+
+                            else if (this%right_ext_type == negb_ext_type_symmetry) then
+                                array2d(xend+1, ystart:yend)   = array2d(xend-1, ystart:yend)
+                                array2d(xend+1, ystart-1)      = 2.d0 * array2d(xend+1, ystart) - array2d(xend+1, ystart+1)
+                                array2d(xend+1, yend+1)        = 2.d0 * array2d(xend+1, yend) - array2d(xend+1, yend-1)
+
+                            end if
+                        end if
+
+                        if (this%negb_type(negb_bottom) == negb_type_domain) then       ! bottom
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_bottom), 0, this%win_top, ierr)
+                            call MPI_GET(this%recv_buff_edge_bottom, this%lx, MPI_DOUBLE, this%negb_rank(negb_bottom), this%disp_aint, this%lx, MPI_DOUBLE, this%win_top, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_bottom), this%win_top, ierr)
+
+                            array2d(xstart:xend, ystart-1) = this%recv_buff_edge_bottom
+                            array2d(xstart-1, ystart-1)    = 2.d0 * array2d(xstart, ystart-1) - array2d(xstart+1, ystart-1)
+                            array2d(xend+1, ystart-1)      = 2.d0 * array2d(xend, ystart-1) - array2d(xend-1, ystart-1)
+                        
+                        else if (this%negb_type(negb_bottom) == negb_type_boundary) then
+                            if (this%bottom_ext_type == negb_ext_type_intep) then
+                                array2d(xstart:xend, ystart-1) = 2.d0 * array2d(xstart:xend, ystart) - array2d(xstart:xend, ystart+1)
+                                array2d(xstart-1, ystart-1)    = 2.d0 * array2d(xstart, ystart-1) - array2d(xstart+1, ystart-1)
+                                array2d(xend+1, ystart-1)      = 2.d0 * array2d(xend, ystart-1) - array2d(xend-1, ystart-1)
+                            else if (this%bottom_ext_type == negb_ext_type_symmetry) then
+                                array2d(xstart:xend, ystart-1) = array2d(xstart:xend, ystart+1)
+                                array2d(xstart-1, ystart-1)    = 2.d0 * array2d(xstart, ystart-1) - array2d(xstart+1, ystart-1)
+                                array2d(xend+1, ystart-1)      = 2.d0 * array2d(xend, ystart-1) - array2d(xend-1, ystart-1)
+
+                            end if
+                        end if
+
+                        if (this%negb_type(negb_top) == negb_type_domain) then          ! top
+                            this%disp_aint = 0
+                            call MPI_WIN_LOCK(MPI_LOCK_SHARED, this%negb_rank(negb_top), 0, this%win_bottom, ierr)
+                            call MPI_GET(this%recv_buff_edge_top, this%lx, MPI_DOUBLE, this%negb_rank(negb_top), this%disp_aint, this%lx, MPI_DOUBLE, this%win_bottom, ierr)
+                            call MPI_WIN_UNLOCK(this%negb_rank(negb_top), this%win_bottom, ierr)
+
+                            array2d(xstart:xend, yend+1)   = this%recv_buff_edge_top
+                            array2d(xstart-1, yend+1)      = 2.d0 * array2d(xstart, yend+1) - array2d(xstart+1, yend+1)
+                            array2d(xend+1, yend+1)        = 2.d0 * array2d(xend, yend+1) - array2d(xend-1, yend+1)
+                        
+                        else if (this%negb_type(negb_top) == negb_type_boundary) then
+                            if (this%top_ext_type == negb_ext_type_intep) then
+                                array2d(xstart:xend, yend+1)   = 2.d0 * array2d(xstart:xend, yend) - array2d(xstart:xend, yend-1)
+                                array2d(xstart-1, yend+1)      = 2.d0 * array2d(xstart, yend+1) - array2d(xstart+1, yend+1)
+                                array2d(xend+1, yend+1)        = 2.d0 * array2d(xend, yend+1) - array2d(xend-1, yend+1)
+
+                            else if (this%top_ext_type == negb_ext_type_symmetry) then
+                                array2d(xstart:xend, yend+1)   = array2d(xstart:xend, yend-1)
+                                array2d(xstart-1, yend+1)      = 2.d0 * array2d(xstart, yend+1) - array2d(xstart+1, yend+1)
+                                array2d(xend+1, yend+1)        = 2.d0 * array2d(xend, yend+1) - array2d(xend-1, yend+1)
+
+                            end if
+                        end if
 
                     end if
 
