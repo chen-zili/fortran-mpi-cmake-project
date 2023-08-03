@@ -1,5 +1,7 @@
 module ModulePICCommunication
     use mpi
+    use iso_c_binding
+
     implicit none
 
     integer(4), parameter :: com_negb_type_boundary = 0
@@ -27,10 +29,22 @@ module ModulePICCommunication
     integer(4), parameter :: com_field_ext_type_symmetry = 1
 
 
-    type :: ParticleOne
-        real(8) ::  X, Y, Z, R, Vx, Vy, Vz, Ax, Ay, Az, WQ
+    type, bind(c) :: ParticleOne
+        real(c_double) ::  X, Y, Z, R, Vx, Vy, Vz, Ax, Ay, Az, WQ
 
     end type ParticleOne
+
+
+    type, bind(c) :: ParticleBundlePtr
+        integer(c_int) :: npar
+        integer(c_int) :: size
+        integer(c_int) :: npar_min, npar_max
+        real(c_double) :: k_lb, k_dec, k_inc
+
+        type(c_ptr) :: PO
+        type(c_ptr) :: ptr
+
+    end type ParticleBundlePtr
 
 
     type :: ParticleBundle
@@ -39,7 +53,8 @@ module ModulePICCommunication
         integer(4) :: npar_min, npar_max
         real(8) :: k_lb, k_dec, k_inc
 
-        type(ParticleOne), allocatable :: PO(:)
+        type(ParticleOne), pointer :: PO(:)
+        type(ParticleBundlePtr) :: ptr
 
         contains
 
@@ -150,47 +165,10 @@ module ModulePICCommunication
             integer(4), optional, intent(in) :: newsize
             integer(4) :: size_tmp
             type(ParticleOne), allocatable :: temp(:)
-            
-            if (allocated(this%PO)) then
-                if (present(newsize)) then
-                    size_tmp = newsize
 
-                    if (size_tmp < this%npar_min) size_tmp = this%npar_min
-                    if (size_tmp > this%npar_max) size_tmp = this%npar_max
-
-                    allocate(temp(size_tmp))
-                    if (size_tmp <= this%size) then
-                        temp(1:size_tmp) = this%PO(1:size_tmp)
-                        deallocate(this%PO)
-                        call move_alloc(temp, this%PO)
-
-                    else if (size_tmp > this%size) then
-                        temp(1:this%size) = this%PO(1:this%size)
-                        deallocate(this%PO)
-                        call move_alloc(temp, this%PO)
-
-                    end if
-
-                    this%size = size_tmp
-
-                else
-                    deallocate(this%PO)
-                    if (this%size > 0) then
-                        allocate(this%PO(this%size))
-                    else
-                        write(*, *) "The particle bundle size needs to be greater than 0."
-                        stop
-                    end if
-                end if
-
-            else
-                if (this%size > 0) then
-                    allocate(this%PO(this%size))
-                else
-                    write(*, *) "The particle bundle size needs to be greater than 0."
-                    stop
-                end if
-            end if
+            if (present(newsize)) this%size = newsize
+            call c_realloc_bundle(this%ptr, this%size)
+            call c_f_pointer(this%ptr%PO, this%PO, shape=[this%size])
 
         end subroutine reallocParticleBundle
 
@@ -198,7 +176,7 @@ module ModulePICCommunication
         subroutine destroyParticleBundle(this)
             class(ParticleBundle), intent(inout) :: this
 
-            if (allocated(this%PO)) deallocate(this%PO)
+            call c_deallocate_bundle(this%ptr)
             this%npar = 0
 
         end subroutine destroyParticleBundle
@@ -271,7 +249,7 @@ module ModulePICCommunication
                 if (this%npar == 0) then
                     call this%realloc(this%npar_min)
                 else if (this%npar < int(this%k_lb * dble(this%size))) then
-                    tmp_size = int(max(this%k_lb, this%k_dec)*dble(this%size))
+                    tmp_size = max(this%npar_min, int(max(this%k_lb, this%k_dec)*dble(this%size)))
                     call this%realloc(tmp_size)
                 end if
             end if

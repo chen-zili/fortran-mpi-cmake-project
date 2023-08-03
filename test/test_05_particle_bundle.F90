@@ -30,4 +30,5 @@ program fortran_mpi
     end do
 
     call pb%destroy()
+    call b2%destroy()
 end

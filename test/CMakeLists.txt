@@ -55,21 +55,21 @@ add_test(NAME ${test_07} COMMAND "mpirun" "-np" "9" "./${test_07}")
 
 # test 08 测试场通信
 set(test_08 "test_08")
-add_executable(${test_08} field_com_test.F90 ${PROJECT_SOURCE_DIR}/src/pic_com.F90)
+add_executable(${test_08} field_com_test.F90 ${PROJECT_SOURCE_DIR}/src/pic_com.F90 ${PROJECT_SOURCE_DIR}/src/p_realloc.c)
 target_link_libraries(${test_08} PUBLIC MPI::MPI_Fortran)
 
 add_test(NAME ${test_08} COMMAND "mpirun" "-np" "9" "./${test_08}")
 
 # test 09 particle bundle 测试
 set(test_09 "test_09")
-add_executable(${test_09} test_05_particle_bundle.F90 ${PROJECT_SOURCE_DIR}/src/pic_com.F90)
+add_executable(${test_09} test_05_particle_bundle.F90 ${PROJECT_SOURCE_DIR}/src/pic_com.F90 ${PROJECT_SOURCE_DIR}/src/p_realloc.c)
 target_link_libraries(${test_09} PUBLIC MPI::MPI_Fortran)
 
 add_test(NAME ${test_09} COMMAND "mpirun" "-np" "1" "./${test_09}")
 
 # test 10 测试粒子通信
 set(test_10 "test_10")
-add_executable(${test_10} particle_com_test.F90 ${PROJECT_SOURCE_DIR}/src/pic_com.F90)
+add_executable(${test_10} particle_com_test.F90 ${PROJECT_SOURCE_DIR}/src/pic_com.F90 ${PROJECT_SOURCE_DIR}/src/p_realloc.c)
 target_link_libraries(${test_10} PUBLIC MPI::MPI_Fortran)
 
 add_test(NAME ${test_10} COMMAND "mpirun" "-np" "8" "./${test_10}")
