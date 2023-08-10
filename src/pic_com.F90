@@ -923,16 +923,17 @@ module ModulePICCommunication
             do i = 1, com_negb_num
                 if (this%negb_type(i) == com_negb_type_domain) then
                     call MPI_ISEND(particle_number_send(i), 1, &
-                                   MPI_DOUBLE, this%negb_rank(i), &
+                                   MPI_INTEGER, this%negb_rank(i), &
                                    1, MPI_COMM_WORLD, this%reqs_send(i), ierr)
                     call MPI_IRECV(particle_number_recv(i), 1, &
-                                   MPI_DOUBLE, this%negb_rank(i), 1, &
+                                   MPI_INTEGER, this%negb_rank(i), 1, &
                                    MPI_COMM_WORLD, this%reqs_recv(i), ierr)
                 end if
             end do
 
             do i = 1, com_negb_num
                 if (this%negb_type(i) == com_negb_type_domain) then
+                    call MPI_WAIT(this%reqs_send(i), this%status_send(:, i), ierr)
                     call MPI_WAIT(this%reqs_recv(i), this%status_recv(:, i), ierr)
                 end if
             end do
@@ -970,6 +971,10 @@ module ModulePICCommunication
 
             ! wait
             do i = 1, com_negb_num
+                if (this%negb_type(i) == com_negb_type_domain .and. particle_number_send(i) > 0) then
+                    call MPI_WAIT(this%reqs_send(i), this%status_send(:, i), ierr)
+                end if
+
                 if (this%negb_type(i) == com_negb_type_domain .and. particle_number_recv(i) > 0) then
                     call MPI_WAIT(this%reqs_recv(i), this%status_recv(:, i), ierr)
                 end if
@@ -987,6 +992,14 @@ module ModulePICCommunication
                 call particle_recv_buff(i)%destroy()
             end do
 
+            do i = pb%npar, 1, -1
+                index = getParticleDomainIndex(pb%PO(i), x_lb, x_ub, y_lb, y_ub)
+
+                if (index > 0) then
+                    call pb%delone(i)
+                end if
+            end do
+
         end subroutine communicationPICParticleCom2D
 
 
@@ -1000,7 +1013,7 @@ module ModulePICCommunication
 
             if (this%is_init) then
                 array2d_tmp = 0
-                array2d_tmp(this%col*this%lx+1:(this%col+1)*this%lx, this%row*this%ly+1:(this%row+1)*this%ly) = array2d_local(xstart:xend, ystart:yend)
+                array2d_tmp(xstart:xend, ystart:yend) = array2d_local(xstart:xend, ystart:yend)
                 
                 call MPI_ALLREDUCE(array2d_tmp, array2d_global, this%lx*this%ly*this%size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, ierr)
 
@@ -1018,28 +1031,28 @@ module ModulePICCommunication
             integer(4) :: getParticleDomainIndex
 
             getParticleDomainIndex = 0
-            if (one%X < x_lb) then
-                if (one%Y < y_lb) then
+            if (one%Z <= x_lb) then
+                if (one%R <= y_lb) then
                     getParticleDomainIndex = com_negb_left_bottom
-                else if (one%Y > y_ub) then
+                else if (one%R >= y_ub) then
                     getParticleDomainIndex = com_negb_left_top
                 else
                     getParticleDomainIndex = com_negb_left
                 end if
 
-            else if (one%X > x_ub) then
-                if (one%Y < y_lb) then
+            else if (one%Z >= x_ub) then
+                if (one%R <= y_lb) then
                     getParticleDomainIndex = com_negb_right_bottom
-                else if (one%Y > y_ub) then
+                else if (one%R >= y_ub) then
                     getParticleDomainIndex = com_negb_right_top
                 else
                     getParticleDomainIndex = com_negb_right
                 end if
 
             else
-                if (one%Y < y_lb) then
+                if (one%R <= y_lb) then
                     getParticleDomainIndex = com_negb_bottom
-                else if (one%Y > y_ub) then
+                else if (one%R >= y_ub) then
                     getParticleDomainIndex = com_negb_top
                 else
                     getParticleDomainIndex = 0

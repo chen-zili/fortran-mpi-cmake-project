@@ -7,8 +7,8 @@ program fortran_mpi
     type(PICCom2D) :: mycom
     type(ParticleBundle) :: pb
     type(ParticleOne) :: one
-    character(len=99) :: filename
-    real(8) :: R
+    character(len=99) :: file_name
+    real(8) :: RR
     real(8) :: xstart, xend, ystart, yend
     real(8) :: x_lb, x_ub, y_lb, y_ub
 
@@ -34,11 +34,11 @@ program fortran_mpi
 
     ! 生成粒子
     do i = 1, pb%size
-        call random_number(R)
-        one%X = xstart - 1.d0 + (xend - xstart + 2.d0) * R
+        call random_number(RR)
+        one%X = xstart - 1.d0 + (xend - xstart + 2.d0) * RR
 
-        call random_number(R)
-        one%Y = ystart - 1.d0 + (yend - ystart + 2.d0) * R
+        call random_number(RR)
+        one%Y = ystart - 1.d0 + (yend - ystart + 2.d0) * RR
 
         call pb%addone(one)
     end do
@@ -55,8 +55,8 @@ program fortran_mpi
     end do
 
     ! dump
-    write(filename, '(i1)') rank
-    open(10, file="raw_par_"//trim(filename)//".txt")
+    write(file_name, '(i1)') rank
+    open(10, file="raw_par_"//trim(file_name)//".txt")
         do i = 1, pb%npar
             write(10, '(*(f10.4, 1x))') pb%PO(i)%X, pb%PO(i)%Y
         end do
@@ -66,8 +66,8 @@ program fortran_mpi
     call mycom%comp(pb, xstart, xend, ystart, yend)
 
     ! dump
-    write(filename, '(i1)') rank
-    open(10, file="final_par_"//trim(filename)//".txt")
+    write(file_name, '(i1)') rank
+    open(10, file="final_par_"//trim(file_name)//".txt")
         do i = 1, pb%npar
             write(10, '(*(f10.4, 1x))') pb%PO(i)%X, pb%PO(i)%Y
         end do

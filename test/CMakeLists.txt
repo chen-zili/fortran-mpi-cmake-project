@@ -58,7 +58,7 @@ set(test_08 "test_08")
 add_executable(${test_08} field_com_test.F90 ${PROJECT_SOURCE_DIR}/src/pic_com.F90)
 target_link_libraries(${test_08} PUBLIC MPI::MPI_Fortran)
 
-add_test(NAME ${test_08} COMMAND "mpirun" "-np" "9" "./${test_08}")
+add_test(NAME ${test_08} COMMAND "mpirun" "-np" "8" "./${test_08}")
 
 # test 09 particle bundle 测试
 set(test_09 "test_09")

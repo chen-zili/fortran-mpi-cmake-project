@@ -7,10 +7,11 @@ program fortran_mpi
     type(PICCom2D) :: mycom
     real(8), allocatable :: array(:, :), array_ext(:, :)
     real(8), allocatable :: array_out(:, :)
-    character(len=99) :: filename
+    character(len=99) :: file_name
 
     integer(4) :: lx = 4, ly = 5
-    integer(4) :: px = 3, py = 3
+    integer(4) :: px = 4, py = 2
+    integer(4) :: xstart, xend, ystart, yend
 
     call MPI_INIT(ierr)
     call MPI_COMM_SIZE(MPI_COMM_WORLD, size, ierr)
@@ -18,37 +19,42 @@ program fortran_mpi
 
     call mycom%init(lx, ly, px, py, com_type_nonblock)
 
-    allocate(array(lx, ly))
-    allocate(array_ext(0:lx+1, 0:ly+1))
+    xstart = mycom%col * lx + 1
+    xend   = (mycom%col+1) * lx
+    ystart = mycom%row * ly + 1
+    yend   = (mycom%row+1) * ly
+
+    allocate(array(xstart:xend, ystart:yend))
+    allocate(array_ext(xstart-1:xend+1, ystart-1:yend+1))
     allocate(array_out(lx*px, ly*py))
 
-    do i = 1, lx
-        do j = 1, ly
-            array(i, j) = rank + i + j
+    do i = xstart, xend
+        do j = ystart, yend
+            array(i, j) = i + j
         end do
     end do
 
     array_ext = -1.d0
-    array_ext(1:lx, 1:ly) = array(1:lx, 1:ly)
+    array_ext(xstart:xend, ystart:yend) = array(xstart:xend, ystart:yend)
 
     mycom%left_ext_type = com_field_ext_type_symmetry
 
-    call mycom%comf(array, com_field_opt_sum, 1, lx, 1, ly)
-    call mycom%comf(array_ext, com_field_opt_ext, 1, lx, 1, ly)
+    call mycom%comf(array, com_field_opt_sum, xstart, xend, ystart, yend)
+    call mycom%comf(array_ext, com_field_opt_ext, xstart, xend, ystart, yend)
 
-    call mycom%gather(array, array_out, 1, lx, 1, ly, lx*px, ly*py)
+    call mycom%gather(array, array_out, xstart, xend, ystart, yend, lx*px, ly*py)
 
     if (0 == rank) then
-        open(10, file="./result_field_nonblock.txt")
+        open(10, file="./result_field_com.txt")
             do i = 1, ly*py
                 write(10, '(*(f10.4, 1x))') array_out(:, i)
             end do
         close(10)
     end if
 
-    write(filename, '(i2)') rank
-    open(10, file="./result_field_nonblock_"//trim(filename)//".txt")
-        do i = 0, ly+1
+    write(file_name, '(i2)') rank
+    open(10, file="./result_field_com_"//trim(file_name)//".txt")
+        do i = ystart-1, yend+1
             write(10, '(*(f10.4, 1x))') array_ext(:, i)
         end do
     close(10)
